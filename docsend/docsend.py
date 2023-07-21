@@ -5,7 +5,6 @@ from pathlib import Path
 from PIL import Image
 from requests_html import HTMLSession
 
-
 class DocSend:
 
     def __init__(self, doc_id):

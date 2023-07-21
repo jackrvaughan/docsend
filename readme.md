@@ -4,7 +4,7 @@ Convert docsend.com to PDF or PNG image sequence.
 
 ## Install
 
-Python 3.6+ is required.
+Python 3.8+ is required.
 
 ```
 pip install docsend
