@@ -1,0 +1,3 @@
+[console_scripts]
+docsend=docsend.cli:main
+
