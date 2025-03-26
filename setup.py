@@ -27,7 +27,7 @@ setup(
         "tqdm==4.36.1",
         "urllib3>=2.0.0",
         "w3lib==1.21.0",
-        "websockets==8.0.2",
+        "websockets>=10.0,<12.0",  # Allow versions 10.x and 11.x
     ],
     entry_points={
         'console_scripts': [
