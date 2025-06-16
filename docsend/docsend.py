@@ -104,8 +104,10 @@ class DocSend:
     def save_pdf(self, name=None):
         try:
             # Process and save all images in batches
+            logger.info(f"saving images in batches")
             all_images = []
             for start_page in range(1, self.pages + 1, self.batch_size):
+                logger.info(f"processing batch")
                 batch_images = self._process_batch(start_page)
                 all_images.extend(batch_images)
                 # Clear batch images from memory
@@ -134,6 +136,7 @@ class DocSend:
             for start_page in range(1, self.pages + 1, self.batch_size):
                 batch_images = self._process_batch(start_page)
                 for i, image in enumerate(batch_images, start=start_page):
+                    logger.info(f"saving image {i}")
                     image.save(path / f'{i}.png', format='PNG')
                 # Clear batch images from memory
                 del batch_images
