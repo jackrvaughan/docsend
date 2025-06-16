@@ -64,11 +64,28 @@ class DocSend:
             logger.error(f"Failed to authorize: {str(e)}")
             raise
 
-    def fetch_images(self):
+    def fetch_images(self, batch_size=5):
+        """Fetch images in batches to manage memory usage.
+        
+        Args:
+            batch_size (int): Number of images to process in each batch
+        """
         self.image_urls = []
-        with ThreadPoolExecutor(self.pages) as pool:
-            self._pool = pool
-            self.images = list(pool.map(self._fetch_image, range(1, self.pages + 1)))
+        self.total_pages = self.pages
+        self.batch_size = batch_size
+        
+    def _process_batch(self, start_page):
+        """Process a batch of pages and return the images.
+        
+        Args:
+            start_page (int): Starting page number for this batch
+            
+        Returns:
+            list: List of processed images in this batch
+        """
+        end_page = min(start_page + self.batch_size, self.pages + 1)
+        with ThreadPoolExecutor(min(self.batch_size, end_page - start_page)) as pool:
+            return list(pool.map(self._fetch_image, range(start_page, end_page)))
 
     def _fetch_image(self, page):
         try:
@@ -86,12 +103,24 @@ class DocSend:
 
     def save_pdf(self, name=None):
         try:
-            self.images[0].save(
-                name,
-                format='PDF',
-                append_images=self.images[1:],
-                save_all=True
-            )
+            # Process and save all images in batches
+            all_images = []
+            for start_page in range(1, self.pages + 1, self.batch_size):
+                batch_images = self._process_batch(start_page)
+                all_images.extend(batch_images)
+                # Clear batch images from memory
+                del batch_images
+            
+            # Save all images to PDF
+            if all_images:
+                all_images[0].save(
+                    name,
+                    format='PDF',
+                    append_images=all_images[1:],
+                    save_all=True
+                )
+                # Clear all images from memory
+                del all_images
         except Exception as e:
             logger.error(f"Failed to save PDF: {str(e)}")
             raise
@@ -100,8 +129,14 @@ class DocSend:
         try:
             path = Path(name)
             path.mkdir(exist_ok=True)
-            for page, image in enumerate(self.images, start=1):
-                image.save(path / f'{page}.png', format='PNG')
+            
+            # Process and save images in batches
+            for start_page in range(1, self.pages + 1, self.batch_size):
+                batch_images = self._process_batch(start_page)
+                for i, image in enumerate(batch_images, start=start_page):
+                    image.save(path / f'{i}.png', format='PNG')
+                # Clear batch images from memory
+                del batch_images
         except Exception as e:
             logger.error(f"Failed to save images: {str(e)}")
             raise
